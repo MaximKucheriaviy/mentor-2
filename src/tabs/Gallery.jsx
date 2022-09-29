@@ -9,7 +9,8 @@ export class Gallery extends Component {
     keyWord: '',
     page: 1,
     isVisible: false,
-    isEmpty: false,
+    isEmpty: true,
+    isLoading: false,
   };
 
   componentDidUpdate(_, prevState) {
@@ -21,6 +22,12 @@ export class Gallery extends Component {
   }
 
   getPhotos = async (keyWord, page) => {
+    if (!keyWord) {
+      return;
+    }
+    this.setState({
+      isLoading: true
+    })
     try {
       const { photos, total_results, per_page } = await fetchData(
         keyWord,
@@ -41,6 +48,10 @@ export class Gallery extends Component {
       });
     } catch (error) {
       console.log(error);
+    } finally {
+       this.setState({
+      isLoading: false,
+    })
     }
   };
 
@@ -57,7 +68,7 @@ export class Gallery extends Component {
   };
 
   render() {
-    const { photos, isVisible, isEmpty } = this.state;
+    const { photos, isVisible, isEmpty, isLoading } = this.state;
     const { onLoadMore } = this;
     return (
       <>
@@ -65,10 +76,21 @@ export class Gallery extends Component {
         {isEmpty && (
           <Text textAlign="center">Sorry. There are no images ... 😭</Text>
         )}
-        {photos.length > 0 && (
+        {photos.length === 0 && (
           <Text textAlign="center">Sorry. There are no images ... 😭</Text>
         )}
-        {isVisible && <Button onClick={onLoadMore}>Load More</Button>}
+        {photos.length > 0 && <Grid>{
+          photos.map(({ id, alt, src:{large}, avg_color }) => (
+            <GridItem key={id}>
+              <CardItem color={avg_color}>
+                <img src={large} alt={alt} />
+              </CardItem>
+            </GridItem>
+          ))}
+                              </Grid>}
+        {isVisible && <Button onClick={onLoadMore}>{isLoading ? "Loading..." : "Load more"}</Button>}
+
+
       </>
     );
   }
